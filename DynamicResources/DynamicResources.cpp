@@ -107,11 +107,12 @@ void DynamicResources::LoadPipeline(vector<Resource::uptr>& uploaders)
 	XUSG_N_RETURN(pCommandList->Create(m_device.get(), 0, CommandListType::DIRECT,
 		m_commandAllocators[m_frameIndex].get(), nullptr), ThrowIfFailed(E_FAIL));
 
-	m_bindlessFilter = make_unique<BindlessFilter>();
-	if (!m_bindlessFilter) ThrowIfFailed(E_FAIL);
+	// Create descriptor table cache.
+	m_descriptorTableCache = DescriptorTableCache::MakeShared(m_device.get(), L"DescriptorTableCache");
 
-	if (!m_bindlessFilter->Init(pCommandList, uploaders, Format::B8G8R8A8_UNORM, m_fileName.c_str()))
-		ThrowIfFailed(E_FAIL);
+	m_bindlessFilter = make_unique<BindlessFilter>();
+	XUSG_N_RETURN(m_bindlessFilter->Init(pCommandList, m_descriptorTableCache, uploaders,
+		Format::B8G8R8A8_UNORM, m_fileName.c_str()), ThrowIfFailed(E_FAIL));
 	
 	m_bindlessFilter->GetImageSize(m_width, m_height);
 
@@ -253,6 +254,14 @@ void DynamicResources::PopulateCommandList()
 	XUSG_N_RETURN(pCommandList->Reset(pCommandAllocator, nullptr), ThrowIfFailed(E_FAIL));
 
 	// Record commands.
+	// Set the descriptor pools.
+	const DescriptorPool descriptorPools[] =
+	{
+		m_descriptorTableCache->GetDescriptorPool(CBV_SRV_UAV_POOL),
+		m_descriptorTableCache->GetDescriptorPool(SAMPLER_POOL)
+	};
+	pCommandList->SetDescriptorPools(static_cast<uint32_t>(size(descriptorPools)), descriptorPools);
+
 	m_bindlessFilter->Process(pCommandList);
 
 	const auto pResult = m_bindlessFilter->GetResult();

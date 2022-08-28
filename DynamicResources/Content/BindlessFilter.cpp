@@ -32,14 +32,14 @@ BindlessFilter::~BindlessFilter()
 {
 }
 
-bool BindlessFilter::Init(CommandList* pCommandList,  vector<Resource::uptr>& uploaders,
-	Format rtFormat, const wchar_t* fileName)
+bool BindlessFilter::Init(CommandList* pCommandList, const XUSG::DescriptorTableCache::sptr& descriptorTableCache,
+	vector<Resource::uptr>& uploaders, Format rtFormat, const wchar_t* fileName)
 {
 	const auto pDevice = pCommandList->GetDevice();
 	m_graphicsPipelineCache = Graphics::PipelineCache::MakeUnique(pDevice);
 	m_computePipelineCache = Compute::PipelineCache::MakeUnique(pDevice);
-	m_descriptorTableCache = DescriptorTableCache::MakeUnique(pDevice);
 	m_pipelineLayoutCache = PipelineLayoutCache::MakeUnique(pDevice);
+	m_descriptorTableCache = descriptorTableCache;
 
 	// Load input image
 	{
@@ -68,14 +68,6 @@ bool BindlessFilter::Init(CommandList* pCommandList,  vector<Resource::uptr>& up
 
 void BindlessFilter::Process(CommandList* pCommandList)
 {
-	// Set Descriptor pools
-	const DescriptorPool descriptorPools[] =
-	{
-		m_descriptorTableCache->GetDescriptorPool(CBV_SRV_UAV_POOL),
-		m_descriptorTableCache->GetDescriptorPool(SAMPLER_POOL)
-	};
-	pCommandList->SetDescriptorPools(static_cast<uint32_t>(size(descriptorPools)), descriptorPools);
-
 	ResourceBarrier barrier;
 	const auto numBarriers = m_result->SetBarrier(&barrier, ResourceState::UNORDERED_ACCESS);
 	pCommandList->Barrier(numBarriers, &barrier);
