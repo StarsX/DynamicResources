@@ -25,21 +25,21 @@ const auto g_samplerCount = g_resIdx.SmpLinear + 1;
 BindlessFilter::BindlessFilter() :
 	m_imageSize(1, 1)
 {
-	m_shaderPool = ShaderPool::MakeUnique();
+	m_shaderLib = ShaderLib::MakeUnique();
 }
 
 BindlessFilter::~BindlessFilter()
 {
 }
 
-bool BindlessFilter::Init(CommandList* pCommandList, const XUSG::DescriptorTableCache::sptr& descriptorTableCache,
+bool BindlessFilter::Init(CommandList* pCommandList, const XUSG::DescriptorTableLib::sptr& descriptorTableLib,
 	vector<Resource::uptr>& uploaders, Format rtFormat, const wchar_t* fileName)
 {
 	const auto pDevice = pCommandList->GetDevice();
-	m_graphicsPipelineCache = Graphics::PipelineCache::MakeUnique(pDevice);
-	m_computePipelineCache = Compute::PipelineCache::MakeUnique(pDevice);
-	m_pipelineLayoutCache = PipelineLayoutCache::MakeUnique(pDevice);
-	m_descriptorTableCache = descriptorTableCache;
+	m_graphicsPipelineLib = Graphics::PipelineLib::MakeUnique(pDevice);
+	m_computePipelineLib = Compute::PipelineLib::MakeUnique(pDevice);
+	m_pipelineLayoutLib = PipelineLayoutLib::MakeUnique(pDevice);
+	m_descriptorTableLib = descriptorTableLib;
 
 	// Load input image
 	{
@@ -75,7 +75,7 @@ void BindlessFilter::Process(CommandList* pCommandList)
 	pCommandList->SetComputePipelineLayout(m_pipelineLayouts[IMAGE_PROC]);
 	pCommandList->SetPipelineState(m_pipelines[IMAGE_PROC]);
 
-	pCommandList->SetCompute32BitConstants(0, XUSG_SizeOfInUint32(g_resIdx), &g_resIdx);
+	pCommandList->SetCompute32BitConstants(0, XUSG_UINT32_SIZE_OF(g_resIdx), &g_resIdx);
 
 	pCommandList->Dispatch(XUSG_DIV_UP(m_imageSize.x, 8), XUSG_DIV_UP(m_imageSize.y, 8), 1);
 }
@@ -96,10 +96,10 @@ bool BindlessFilter::createPipelineLayouts()
 	// Dynamic resources
 	{
 		const auto utilPipelineLayout = Util::PipelineLayout::MakeUnique();
-		utilPipelineLayout->SetConstants(0, XUSG_SizeOfInUint32(ResourceIndices), 0);
+		utilPipelineLayout->SetConstants(0, XUSG_UINT32_SIZE_OF(ResourceIndices), 0);
 
 		XUSG_X_RETURN(m_pipelineLayouts[IMAGE_PROC], utilPipelineLayout->GetPipelineLayout(
-			m_pipelineLayoutCache.get(), PipelineLayoutFlag::CBV_SRV_UAV_POOL_DIRECTLY_INDEXED |
+			m_pipelineLayoutLib.get(), PipelineLayoutFlag::CBV_SRV_UAV_POOL_DIRECTLY_INDEXED |
 			PipelineLayoutFlag::SAMPLER_POOL_DIRECTLY_INDEXED, L"ImageProcLayout"), false);
 	}
 
@@ -112,12 +112,12 @@ bool BindlessFilter::createPipelines(Format rtFormat)
 
 	// One-pass MIP-Gen
 	{
-		XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSImageProc.cso"), false);
+		XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::CS, csIndex, L"CSImageProc.cso"), false);
 
 		const auto state = Compute::State::MakeUnique();
 		state->SetPipelineLayout(m_pipelineLayouts[IMAGE_PROC]);
-		state->SetShader(m_shaderPool->GetShader(Shader::Stage::CS, csIndex++));
-		XUSG_X_RETURN(m_pipelines[IMAGE_PROC], state->GetPipeline(m_computePipelineCache.get(), L"ImageProc"), false);
+		state->SetShader(m_shaderLib->GetShader(Shader::Stage::CS, csIndex++));
+		XUSG_X_RETURN(m_pipelines[IMAGE_PROC], state->GetPipeline(m_computePipelineLib.get(), L"ImageProc"), false);
 	}
 
 	return true;
@@ -134,7 +134,7 @@ bool BindlessFilter::createDescriptorTables()
 		descriptors[g_resIdx.TexOut] = m_result->GetUAV();
 
 		descriptorTable->SetDescriptors(0, static_cast<uint32_t>(size(descriptors)), descriptors);
-		const auto table = descriptorTable->GetCbvSrvUavTable(m_descriptorTableCache.get());
+		const auto table = descriptorTable->GetCbvSrvUavTable(m_descriptorTableLib.get());
 		XUSG_N_RETURN(table, false);
 	}
 
@@ -145,8 +145,8 @@ bool BindlessFilter::createDescriptorTables()
 		SamplerPreset samplers[g_samplerCount];
 		samplers[g_resIdx.SmpLinear] = LINEAR_CLAMP;
 
-		descriptorTable->SetSamplers(0, static_cast<uint32_t>(size(samplers)), samplers, m_descriptorTableCache.get());
-		const auto table = descriptorTable->GetSamplerTable(m_descriptorTableCache.get());
+		descriptorTable->SetSamplers(0, static_cast<uint32_t>(size(samplers)), samplers, m_descriptorTableLib.get());
+		const auto table = descriptorTable->GetSamplerTable(m_descriptorTableLib.get());
 		XUSG_N_RETURN(table, false);
 	}
 
