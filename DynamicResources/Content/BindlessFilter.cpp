@@ -99,8 +99,8 @@ bool BindlessFilter::createPipelineLayouts()
 		utilPipelineLayout->SetConstants(0, XUSG_UINT32_SIZE_OF(ResourceIndices), 0);
 
 		XUSG_X_RETURN(m_pipelineLayouts[IMAGE_PROC], utilPipelineLayout->GetPipelineLayout(
-			m_pipelineLayoutLib.get(), PipelineLayoutFlag::CBV_SRV_UAV_POOL_DIRECTLY_INDEXED |
-			PipelineLayoutFlag::SAMPLER_POOL_DIRECTLY_INDEXED, L"ImageProcLayout"), false);
+			m_pipelineLayoutLib.get(), PipelineLayoutFlag::CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED |
+			PipelineLayoutFlag::SAMPLER_HEAP_DIRECTLY_INDEXED, L"ImageProcLayout"), false);
 	}
 
 	return true;
