@@ -29,6 +29,13 @@ protected:
 		NUM_PIPELINE
 	};
 
+	struct ResourceIndices
+	{
+		uint32_t TexIn = 0;
+		uint32_t TexOut = TexIn + 1;
+		uint32_t SmpLinear = 0;
+	};
+
 	bool createPipelineLayouts();
 	bool createPipelines(XUSG::Format rtFormat);
 	bool createDescriptorTables();
@@ -49,4 +56,6 @@ protected:
 
 	XUSG::ResourceBarrier				m_barriers[2];
 	uint32_t							m_numBarriers;
+
+	ResourceIndices						m_resIndices;
 };

@@ -11,17 +11,6 @@ using namespace std;
 using namespace DirectX;
 using namespace XUSG;
 
-struct ResourceIndices
-{
-	uint32_t TexIn = 0;
-	uint32_t TexOut = TexIn + 1;
-	uint32_t SmpLinear = 0;
-};
-
-constexpr ResourceIndices g_resIdx;
-const auto g_resourceCount = g_resIdx.TexOut + 1;
-const auto g_samplerCount = g_resIdx.SmpLinear + 1;
-
 BindlessFilter::BindlessFilter() :
 	m_imageSize(1, 1)
 {
@@ -75,7 +64,7 @@ void BindlessFilter::Process(CommandList* pCommandList)
 	pCommandList->SetComputePipelineLayout(m_pipelineLayouts[IMAGE_PROC]);
 	pCommandList->SetPipelineState(m_pipelines[IMAGE_PROC]);
 
-	pCommandList->SetCompute32BitConstants(0, XUSG_UINT32_SIZE_OF(g_resIdx), &g_resIdx);
+	pCommandList->SetCompute32BitConstants(0, XUSG_UINT32_SIZE_OF(m_resIndices), &m_resIndices);
 
 	pCommandList->Dispatch(XUSG_DIV_UP(m_imageSize.x, 8), XUSG_DIV_UP(m_imageSize.y, 8), 1);
 }
@@ -125,13 +114,32 @@ bool BindlessFilter::createPipelines(Format rtFormat)
 
 bool BindlessFilter::createDescriptorTables()
 {
+#if 1
+	// Use GetCbvSrvUavTableIndex
+	auto descriptorTable = Util::DescriptorTable::MakeUnique();
+	descriptorTable->SetDescriptors(0, 1, &m_source->GetSRV());
+	m_resIndices.TexIn = descriptorTable->GetCbvSrvUavTableIndex(m_descriptorTableLib.get());
+	XUSG_C_RETURN(m_resIndices.TexIn == UINT32_MAX, false);
+
+	descriptorTable = Util::DescriptorTable::MakeUnique();
+	descriptorTable->SetDescriptors(0, 1, &m_result->GetUAV());
+	m_resIndices.TexOut = descriptorTable->GetCbvSrvUavTableIndex(m_descriptorTableLib.get());
+	XUSG_C_RETURN(m_resIndices.TexOut == UINT32_MAX, false);
+
+	// Use GetSamplerTableIndex
+	descriptorTable = Util::DescriptorTable::MakeUnique();
+	const auto sampler = LINEAR_CLAMP;
+	descriptorTable->SetSamplers(0, 1, &sampler, m_descriptorTableLib.get());
+	m_resIndices.SmpLinear = descriptorTable->GetSamplerTableIndex(m_descriptorTableLib.get());
+	XUSG_C_RETURN(m_resIndices.SmpLinear == UINT32_MAX, false);
+#else
 	// Create a resource table with all used CBVs/SRVs/UAVs
 	{
 		const auto descriptorTable = Util::DescriptorTable::MakeUnique();
 
 		Descriptor descriptors[g_resourceCount];
-		descriptors[g_resIdx.TexIn] = m_source->GetSRV();
-		descriptors[g_resIdx.TexOut] = m_result->GetUAV();
+		descriptors[m_resIndices.TexIn] = m_source->GetSRV();
+		descriptors[m_resIndices.TexOut] = m_result->GetUAV();
 
 		descriptorTable->SetDescriptors(0, static_cast<uint32_t>(size(descriptors)), descriptors);
 		const auto table = descriptorTable->GetCbvSrvUavTable(m_descriptorTableLib.get());
@@ -143,12 +151,13 @@ bool BindlessFilter::createDescriptorTables()
 		const auto descriptorTable = Util::DescriptorTable::MakeUnique();
 
 		SamplerPreset samplers[g_samplerCount];
-		samplers[g_resIdx.SmpLinear] = LINEAR_CLAMP;
+		samplers[m_resIndices.SmpLinear] = LINEAR_CLAMP;
 
 		descriptorTable->SetSamplers(0, static_cast<uint32_t>(size(samplers)), samplers, m_descriptorTableLib.get());
 		const auto table = descriptorTable->GetSamplerTable(m_descriptorTableLib.get());
 		XUSG_N_RETURN(table, false);
 	}
+#endif
 
 	return true;
 }
