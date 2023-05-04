@@ -102,7 +102,6 @@ COPY /Y "$(ProjectDir)D3D12\$(Platform)\*.dll" "$(ProjectDir)..\Bin\D3D12"</Comm
   <ItemGroup>
     <ClInclude Include="Common\d3d12.h" />
     <ClInclude Include="Common\d3dcommon.h" />
-    <ClInclude Include="Common\d3dx12.h" />
     <ClInclude Include="Common\dds.h" />
     <ClInclude Include="Common\DXFramework.h" />
     <ClInclude Include="Common\DXFrameworkHelper.h" />
