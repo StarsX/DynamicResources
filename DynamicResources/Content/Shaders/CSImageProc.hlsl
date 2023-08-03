@@ -48,7 +48,7 @@ void main(uint2 DTid : SV_DispatchThreadID, uint2 Gid : SV_GroupID, uint2 GTid :
 
 	// Load data into group-shared memory
 	const uint n = DIV_UP(SHARED_MEM_SIZE, GROUP_SIZE);
-	const int2 uvIdx = GROUP_SIZE * Gid - RADIUS;
+	const int2 uvStart = GROUP_SIZE * Gid - RADIUS;
 	for (int i = 0; i < n; ++i)
 	{
 		const int x = GROUP_SIZE * i + GTid.x;
@@ -59,7 +59,7 @@ void main(uint2 DTid : SV_DispatchThreadID, uint2 Gid : SV_GroupID, uint2 GTid :
 				const int y = GROUP_SIZE * j + GTid.y;
 				if (y < SHARED_MEM_SIZE)
 				{
-					const float2 uv = (uvIdx + int2(x, y) + 0.5) / texSize;
+					const float2 uv = (uvStart + int2(x, y) + 0.5) / texSize;
 					g_srcs[y][x] = texIn.SampleLevel(smp, uv, 0.0);;
 				}
 			}
