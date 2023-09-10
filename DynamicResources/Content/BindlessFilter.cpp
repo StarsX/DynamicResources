@@ -128,7 +128,7 @@ bool BindlessFilter::createDescriptorTables()
 
 	// Use GetSamplerTableIndex
 	descriptorTable = Util::DescriptorTable::MakeUnique();
-	const auto sampler = LINEAR_CLAMP;
+	const auto sampler = POINT_CLAMP;
 	descriptorTable->SetSamplers(0, 1, &sampler, m_descriptorTableLib.get());
 	m_resIndices.SmpLinear = descriptorTable->GetSamplerTableIndex(m_descriptorTableLib.get());
 	XUSG_C_RETURN(m_resIndices.SmpLinear == UINT32_MAX, false);
@@ -151,7 +151,7 @@ bool BindlessFilter::createDescriptorTables()
 		const auto descriptorTable = Util::DescriptorTable::MakeUnique();
 
 		SamplerPreset samplers[g_samplerCount];
-		samplers[m_resIndices.SmpLinear] = LINEAR_CLAMP;
+		samplers[m_resIndices.SmpLinear] = POINT_CLAMP;
 
 		descriptorTable->SetSamplers(0, static_cast<uint32_t>(size(samplers)), samplers, m_descriptorTableLib.get());
 		const auto table = descriptorTable->GetSamplerTable(m_descriptorTableLib.get());

@@ -12,7 +12,7 @@ struct ResourceIndices
 {
 	uint TexIn;
 	uint TexOut;
-	uint SmpLinear;
+	uint Sampler;
 };
 
 ConstantBuffer<ResourceIndices> g_cbResIdx;
@@ -41,7 +41,7 @@ void main(uint2 DTid : SV_DispatchThreadID, uint2 Gid : SV_GroupID, uint2 GTid :
 	const Texture2D texIn = ResourceDescriptorHeap[g_cbResIdx.TexIn];
 	const RWTexture2D<float4> texOut = ResourceDescriptorHeap[g_cbResIdx.TexOut];
 
-	const SamplerState smp = SamplerDescriptorHeap[g_cbResIdx.SmpLinear];
+	const SamplerState smp = SamplerDescriptorHeap[g_cbResIdx.Sampler];
 
 	float2 texSize;
 	texIn.GetDimensions(texSize.x, texSize.y);
