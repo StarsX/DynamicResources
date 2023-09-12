@@ -103,8 +103,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="Content\Shaders\CSImageProc.hlsl">
+    <FxCompile Include="Content\Shaders\CSImageProc.hlsl">
       <Filter>Shaders</Filter>
-    </CustomBuild>
+    </FxCompile>
   </ItemGroup>
 </Project>
