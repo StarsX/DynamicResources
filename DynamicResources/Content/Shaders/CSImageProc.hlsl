@@ -3,8 +3,8 @@
 //--------------------------------------------------------------------------------------
 
 #define GROUP_SIZE		8
-#define RADIUS			16
-#define SHARED_MEM_SIZE	(GROUP_SIZE + 2 * RADIUS)
+#define BLUR_RADIUS		16
+#define SHARED_MEM_SIZE	(GROUP_SIZE + 2 * BLUR_RADIUS)
 
 #define DIV_UP(x, n)	(((x) + (n) - 1) / (n))
 
@@ -48,7 +48,7 @@ void main(uint2 DTid : SV_DispatchThreadID, uint2 Gid : SV_GroupID, uint2 GTid :
 
 	// Load data into group-shared memory
 	const uint n = DIV_UP(SHARED_MEM_SIZE, GROUP_SIZE);
-	const int2 uvStart = GROUP_SIZE * Gid - RADIUS;
+	const int2 uvStart = GROUP_SIZE * (int2)Gid - BLUR_RADIUS;
 	for (int i = 0; i < n; ++i)
 	{
 		const int x = GROUP_SIZE * i + GTid.x;
@@ -68,8 +68,8 @@ void main(uint2 DTid : SV_DispatchThreadID, uint2 Gid : SV_GroupID, uint2 GTid :
 
 	GroupMemoryBarrierWithGroupSync();
 
-	const float sigma = GaussianSigmaFromRadius(RADIUS);
-	const int x = GTid.x + RADIUS;
+	const float sigma = GaussianSigmaFromRadius(BLUR_RADIUS);
+	const int x = GTid.x + BLUR_RADIUS;
 
 	// Horizontal filter
 	for (uint k = 0; k < n; ++k)
@@ -79,7 +79,7 @@ void main(uint2 DTid : SV_DispatchThreadID, uint2 Gid : SV_GroupID, uint2 GTid :
 
 		float4 mu = 0.0;
 		float ws = 0.0;
-		for (i = -RADIUS; i <= RADIUS; ++i)
+		for (i = -BLUR_RADIUS; i <= BLUR_RADIUS; ++i)
 		{
 			const int xi = x + i;
 			const float4 src = g_srcs[y][xi];
@@ -95,11 +95,11 @@ void main(uint2 DTid : SV_DispatchThreadID, uint2 Gid : SV_GroupID, uint2 GTid :
 	GroupMemoryBarrierWithGroupSync();
 
 	// Vertical filter
-	const int y = GTid.y + RADIUS;
+	const int y = GTid.y + BLUR_RADIUS;
 
 	float4 mu = 0.0;
 	float ws = 0.0;
-	for (i = -RADIUS; i <= RADIUS; ++i)
+	for (i = -BLUR_RADIUS; i <= BLUR_RADIUS; ++i)
 	{
 		const int yi = y + i;
 		const float4 src = g_dsts[yi][GTid.x];
