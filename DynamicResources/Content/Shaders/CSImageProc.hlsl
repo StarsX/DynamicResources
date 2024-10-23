@@ -8,6 +8,11 @@
 
 #define DIV_UP(x, n)	(((x) + (n) - 1) / (n))
 
+struct VirtualAddress
+{
+	uint2 Addr;
+};
+
 struct ResourceIndices
 {
 	uint TexIn;
@@ -15,7 +20,9 @@ struct ResourceIndices
 	uint Sampler;
 };
 
-ConstantBuffer<ResourceIndices> g_cbResIdx;
+ConstantBuffer<VirtualAddress> g_cbAddress;
+
+RWByteAddressBuffer g_resIndices;
 
 groupshared float4 g_srcs[SHARED_MEM_SIZE][SHARED_MEM_SIZE];
 groupshared float4 g_dsts[SHARED_MEM_SIZE][GROUP_SIZE];
@@ -38,10 +45,12 @@ float Gaussian(float r, float sigma)
 [numthreads(GROUP_SIZE, GROUP_SIZE, 1)]
 void main(uint2 DTid : SV_DispatchThreadID, uint2 Gid : SV_GroupID, uint2 GTid : SV_GroupThreadID)
 {
-	const Texture2D texIn = ResourceDescriptorHeap[g_cbResIdx.TexIn];
-	const RWTexture2D<float4> texOut = ResourceDescriptorHeap[g_cbResIdx.TexOut];
+	const ResourceIndices resIndices = g_resIndices.Load<ResourceIndices>(0);
 
-	const SamplerState smp = SamplerDescriptorHeap[g_cbResIdx.Sampler];
+	const Texture2D texIn = ResourceDescriptorHeap[resIndices.TexIn];
+	const RWTexture2D<float4> texOut = ResourceDescriptorHeap[resIndices.TexOut];
+
+	const SamplerState smp = SamplerDescriptorHeap[resIndices.Sampler];
 
 	float2 texSize;
 	texIn.GetDimensions(texSize.x, texSize.y);

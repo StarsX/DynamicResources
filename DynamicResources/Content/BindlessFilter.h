@@ -38,7 +38,7 @@ protected:
 
 	bool createPipelineLayouts();
 	bool createPipelines(XUSG::Format rtFormat);
-	bool createDescriptorTables();
+	bool createDescriptorTables(XUSG::CommandList* pCommandList, std::vector<XUSG::Resource::uptr>& uploaders);
 
 	XUSG::ShaderLib::uptr				m_shaderLib;
 	XUSG::Graphics::PipelineLib::uptr	m_graphicsPipelineLib;
@@ -50,12 +50,12 @@ protected:
 	XUSG::Pipeline			m_pipelines[NUM_PIPELINE];
 
 	XUSG::Texture::sptr					m_source;
-	XUSG::Texture::sptr					m_result;
+	XUSG::Texture::uptr					m_result;
+
+	XUSG::Buffer::uptr					m_resIndices;
 
 	DirectX::XMUINT2					m_imageSize;
 
 	XUSG::ResourceBarrier				m_barriers[2];
 	uint32_t							m_numBarriers;
-
-	ResourceIndices						m_resIndices;
 };
