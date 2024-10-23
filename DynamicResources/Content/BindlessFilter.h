@@ -58,4 +58,6 @@ protected:
 
 	XUSG::ResourceBarrier				m_barriers[2];
 	uint32_t							m_numBarriers;
+
+	uint64_t							m_addressHi;
 };

@@ -159,14 +159,17 @@ COPY /Y "$(ProjectDir)D3D12\$(Platform)\*.dll" "$(ProjectDir)..\Bin\D3D12"</Comm
     <FxCompile Include="Content\Shaders\CSImageProc.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/T cs_6_6</AdditionalOptions>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/T cs_6_6</AdditionalOptions>
       <FileType>Document</FileType>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)%(Filename).cso</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)%(Filename).cso</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(ProjectDir)..\Bin\dxc.exe" /Fo"$(OutDir)%(Filename).cso" /T"cs_6_6" /nologo "%(FullPath)"</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(ProjectDir)..\Bin\dxc.exe" /Zi /Fo"$(OutDir)%(Filename).cso" /T"cs_6_6" /nologo "%(FullPath)"</Command>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/HV 2021</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/HV 2021 /Qembed_debug</AdditionalOptions>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Content\Shaders\BufferAddress.hlsli" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

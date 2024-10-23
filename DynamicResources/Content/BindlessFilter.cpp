@@ -52,6 +52,7 @@ bool BindlessFilter::Init(CommandList* pCommandList, const XUSG::DescriptorTable
 	XUSG_N_RETURN(m_resIndices->Create(pDevice, sizeof(ResourceIndices),
 		ResourceFlag::ALLOW_UNORDERED_ACCESS, MemoryType::DEFAULT, 0, nullptr,
 		1, nullptr, MemoryFlag::NONE, L"ResourceIndices"), false);
+	m_addressHi = m_resIndices->GetVirtualAddress() & ~uint64_t(UINT32_MAX);
 
 	XUSG_N_RETURN(createPipelineLayouts(), false);
 	XUSG_N_RETURN(createPipelines(rtFormat), false);
@@ -71,7 +72,7 @@ void BindlessFilter::Process(CommandList* pCommandList)
 
 	const auto resIdxBufferVA = m_resIndices->GetVirtualAddress();
 	pCommandList->SetCompute32BitConstants(0, XUSG_UINT32_SIZE_OF(uint64_t), &resIdxBufferVA);
-	pCommandList->SetComputeRootUnorderedAccessView(1, resIdxBufferVA);
+	pCommandList->SetComputeRootUnorderedAccessView(1, m_addressHi);
 
 	pCommandList->Dispatch(XUSG_DIV_UP(m_imageSize.x, 8), XUSG_DIV_UP(m_imageSize.y, 8), 1);
 }

@@ -2,6 +2,9 @@
 // Copyright (c) XU, Tianchen. All rights reserved.
 //--------------------------------------------------------------------------------------
 
+#define ADDR_BUFFER_SPACE space0
+#include "BufferAddress.hlsli"
+
 #define GROUP_SIZE		8
 #define BLUR_RADIUS		16
 #define SHARED_MEM_SIZE	(GROUP_SIZE + 2 * BLUR_RADIUS)
@@ -10,7 +13,7 @@
 
 struct VirtualAddress
 {
-	uint2 Addr;
+	uint64_t Addr;
 };
 
 struct ResourceIndices
@@ -21,8 +24,6 @@ struct ResourceIndices
 };
 
 ConstantBuffer<VirtualAddress> g_cbAddress;
-
-RWByteAddressBuffer g_resIndices;
 
 groupshared float4 g_srcs[SHARED_MEM_SIZE][SHARED_MEM_SIZE];
 groupshared float4 g_dsts[SHARED_MEM_SIZE][GROUP_SIZE];
@@ -45,7 +46,8 @@ float Gaussian(float r, float sigma)
 [numthreads(GROUP_SIZE, GROUP_SIZE, 1)]
 void main(uint2 DTid : SV_DispatchThreadID, uint2 Gid : SV_GroupID, uint2 GTid : SV_GroupThreadID)
 {
-	const ResourceIndices resIndices = g_resIndices.Load<ResourceIndices>(0);
+	const uint64_t addr = g_cbAddress.Addr;
+	const ResourceIndices resIndices = LoadMemory<ResourceIndices>(addr);
 
 	const Texture2D texIn = ResourceDescriptorHeap[resIndices.TexIn];
 	const RWTexture2D<float4> texOut = ResourceDescriptorHeap[resIndices.TexOut];
@@ -58,7 +60,8 @@ void main(uint2 DTid : SV_DispatchThreadID, uint2 Gid : SV_GroupID, uint2 GTid :
 	// Load data into group-shared memory
 	const uint n = DIV_UP(SHARED_MEM_SIZE, GROUP_SIZE);
 	const int2 uvStart = GROUP_SIZE * (int2)Gid - BLUR_RADIUS;
-	for (int i = 0; i < n; ++i)
+	int i;
+	for (i = 0; i < n; ++i)
 	{
 		const int x = GROUP_SIZE * i + GTid.x;
 		if (x < SHARED_MEM_SIZE)
