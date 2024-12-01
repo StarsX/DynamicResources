@@ -38,6 +38,13 @@ public:
 	virtual void ParseCommandLineArgs(wchar_t* argv[], int argc);
 
 private:
+	enum DeviceType : uint8_t
+	{
+		DEVICE_DISCRETE,
+		DEVICE_UMA,
+		DEVICE_WARP
+	};
+
 	static const uint8_t FrameCount = 3;
 
 	XUSG::DescriptorTableLib::sptr	m_descriptorTableLib;
@@ -60,9 +67,10 @@ private:
 	uint64_t	m_fenceValues[FrameCount];
 
 	// Application state
+	DeviceType	m_deviceType;
+	StepTimer	m_timer;
 	bool		m_showFPS;
 	bool		m_isPaused;
-	StepTimer	m_timer;
 
 	// User external settings
 	std::wstring m_fileName;
