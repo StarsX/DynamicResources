@@ -3,9 +3,8 @@
 //--------------------------------------------------------------------------------------
 
 #include "BindlessFilter.h"
-#define _INDEPENDENT_DDS_LOADER_
-#include "Advanced/XUSGDDSLoader.h"
-#undef _INDEPENDENT_DDS_LOADER_
+#define _ENABLE_STB_IMAGE_LOADER_ONLY_
+#include "Advanced/XUSGTextureLoader.h"
 
 using namespace std;
 using namespace DirectX;
@@ -22,7 +21,7 @@ BindlessFilter::~BindlessFilter()
 }
 
 bool BindlessFilter::Init(CommandList* pCommandList, const XUSG::DescriptorTableLib::sptr& descriptorTableLib,
-	vector<Resource::uptr>& uploaders, Format rtFormat, const wchar_t* fileName)
+	vector<Resource::uptr>& uploaders, Format rtFormat, const char* fileName)
 {
 	const auto pDevice = pCommandList->GetDevice();
 	m_graphicsPipelineLib = Graphics::PipelineLib::MakeUnique(pDevice);
@@ -32,12 +31,10 @@ bool BindlessFilter::Init(CommandList* pCommandList, const XUSG::DescriptorTable
 
 	// Load input image
 	{
-		DDS::Loader textureLoader;
-		DDS::AlphaMode alphaMode;
-
+		m_source = Texture::MakeUnique();
 		uploaders.emplace_back(Resource::MakeUnique());
-		XUSG_N_RETURN(textureLoader.CreateTextureFromFile(pCommandList, fileName,
-			8192, false, m_source, uploaders.back().get(), &alphaMode), false);
+		XUSG_N_RETURN(CreateTextureFromFile(pCommandList, fileName, m_source.get(),
+			uploaders.back().get(), ResourceState::COMMON, MemoryFlag::NONE, L"Source"), false);
 	}
 
 	// Create resources and pipelines

@@ -14,7 +14,7 @@ public:
 	virtual ~BindlessFilter();
 
 	bool Init(XUSG::CommandList* pCommandList, const XUSG::DescriptorTableLib::sptr& descriptorTableLib,
-		std::vector<XUSG::Resource::uptr>& uploaders, XUSG::Format rtFormat, const wchar_t* fileName);
+		std::vector<XUSG::Resource::uptr>& uploaders, XUSG::Format rtFormat, const char* fileName);
 
 	void Process(XUSG::CommandList* pCommandList);
 	void GetImageSize(uint32_t& width, uint32_t& height) const;
@@ -49,7 +49,7 @@ protected:
 	XUSG::PipelineLayout	m_pipelineLayouts[NUM_PIPELINE];
 	XUSG::Pipeline			m_pipelines[NUM_PIPELINE];
 
-	XUSG::Texture::sptr					m_source;
+	XUSG::Texture::uptr					m_source;
 	XUSG::Texture::uptr					m_result;
 
 	XUSG::Buffer::uptr					m_resIndices;
